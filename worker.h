@@ -1,5 +1,5 @@
-// worker.h
 #pragma once
+
 #include <QObject>
 #include <QByteArray>
 #include <QString>
@@ -15,7 +15,7 @@ public:
            QObject *parent = nullptr);
 
 signals:
-    void progress(int percent);
+    void progress(int percentage);
     void finished(const QString &outputPath);
     void error(const QString &message);
 
@@ -24,8 +24,8 @@ public slots:
 
 private:
     QString filePath;
-    QByteArray key;
     QString outputPath;
+    QByteArray key;
     bool overwrite;
     bool deleteInput;
 };

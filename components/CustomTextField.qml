@@ -2,7 +2,7 @@ import QtQuick
 import QtQuick.Controls
 
 Rectangle {
-    id: field
+    id: root
 
     property alias text: input.text
 
@@ -38,8 +38,8 @@ Rectangle {
 
         verticalAlignment: TextInput.AlignVCenter
 
-        maximumLength: field.maximumLength
-        validator: field.validator
+        maximumLength: root.maximumLength
+        validator: root.validator
     }
 
     Text {
@@ -49,7 +49,7 @@ Rectangle {
             rightMargin: 16
         }
 
-        text: field.placeholderText
+        text: root.placeholderText
         visible: input.text.length === 0 && !input.focus
         color: "#6c8774"
         font.pixelSize: 14

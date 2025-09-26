@@ -3,6 +3,9 @@
 #include <QFile>
 #include <QFileInfo>
 
+const unsigned short BYTES = 1024;
+const unsigned short TOPERCENT = 100;
+
 Worker::Worker(const QString &filePath,
                const QByteArray &key,
                const QString &outputPath,
@@ -34,16 +37,16 @@ void Worker::process() {
     QByteArray buffer;
     const auto keyLength = key.size();
 
-    while (!(buffer = inputFile.read(1024 * 1024)).isEmpty()) {
+    while (!(buffer = inputFile.read(BYTES ^ 2)).isEmpty()) {
         for (int i = 0; i < buffer.size(); ++i) {
             buffer[i] = buffer[i] ^ key[(bytesRead + i) % keyLength];
         }
         outputFile.write(buffer);
         bytesRead += buffer.size();
 
-        int percent = int((double(bytesRead) / totalSize) * 100);
+        int percentage = int((double(bytesRead) / totalSize) * TOPERCENT);
 
-        emit progress(percent);
+        emit progress(percentage);
     }
 
     inputFile.close();

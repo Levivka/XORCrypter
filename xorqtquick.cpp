@@ -13,13 +13,17 @@ XorQtQuick::XorQtQuick(QObject *parent)
 {
 }
 
+const unsigned short TOSECONDS = 1000;
+const unsigned short HEXKEYLENGTH = 16;
+
+
 QByteArray XorQtQuick::normalizeXorKey(const QString &xorKey) {
     QString key = xorKey.toUpper();
     QString cleaned = key;
     static QRegularExpression validator("[^0-9A-F]");
     cleaned.remove(validator);
 
-    if (cleaned.size() != 16) {
+    if (cleaned.size() != HEXKEYLENGTH) {
         showError("Неверный XOR-ключ (требуется 8 байт в hex)");
         return QByteArray();
     }
@@ -62,7 +66,7 @@ void XorQtQuick::execute(const QString &fileMask,
                 runTask(filePath, xorKeyBytes, outputDir, deleteFile, overwriteMode);
             }
         });
-        timer->start(timerValue * 1000);
+        timer->start(timerValue * TOSECONDS);
     }
 }
 

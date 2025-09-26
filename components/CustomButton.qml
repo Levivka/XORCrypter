@@ -18,12 +18,15 @@ Rectangle {
     width: 160
     height: 42
     radius: root.borderRadius
+
     color: primaryColor
 
     Text {
         id: label
+
         anchors.centerIn: parent
         color: root.textColor
+
         font.pixelSize: 16
         font.bold: true
     }
