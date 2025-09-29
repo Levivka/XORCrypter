@@ -2,95 +2,108 @@ import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
 
-Dialog {
+Popup {
     id: root
-
-    modal: true
 
     property string dialogTitle: ""
     property string dialogText: ""
     property bool isError: false
+    property int autoCloseDelay: 3000
 
-    standardButtons: Dialog.NoButton
-    focus: true
+    modal: false
+    focus: false
+
+    y: 20
+    x: parent ? parent.width - width - 20 : 20
+
+    padding: 16
+    implicitWidth: 400
+    closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
 
     background: Rectangle {
         color: "#161b22"
         radius: 12
-
-        border.color: root.isError ? "#f85149" : "#30363d"
-        border.width: 2
+        opacity: 0.95
+        layer.enabled: true
     }
 
     contentItem: ColumnLayout {
-        id: content
-
-        width: 520
-        anchors.margins: 16
-        spacing: 12
-
+        spacing: 8
         RowLayout {
-            Layout.fillWidth: true
             spacing: 12
 
             Rectangle {
                 implicitWidth: 36
                 implicitHeight: 36
                 radius: 8
-
                 color: root.isError ? "#5a1e1e" : "#1a472a"
                 Text {
                     anchors.centerIn: parent
-
                     text: root.isError ? "⚠" : "✓"
-                    font.pixelSize: 16
+                    font.pixelSize: 18
                     color: root.isError ? "#f85149" : "#56d364"
                 }
             }
 
             ColumnLayout {
+                Layout.fillWidth: true
                 spacing: 2
                 Text {
-                    id: hdr
-
                     text: root.dialogTitle
                     font.pixelSize: 16
                     font.bold: true
                     color: "#f0f6fc"
-
                     elide: Text.ElideRight
                 }
                 Text {
-                    id: subtitle
-
-                    text: root.isError ? "Ошибка" : "Информация"
-                    font.pixelSize: 12
-                    color: "#8b949e"
+                    text: root.dialogText
+                    wrapMode: Text.WordWrap
+                    font.pixelSize: 14
+                    color: "#cbd6c3"
                 }
             }
         }
+    }
 
-        Text {
-            id: body
+    Timer {
+        id: autoCloseTimer
+        interval: root.autoCloseDelay
+        onTriggered: root.close()
+    }
 
-            text: root.dialogText
-            wrapMode: Text.WordWrap
-            font.pixelSize: 14
-            color: "#cbd6c3"
+    onOpened: {
+        autoCloseTimer.restart()
+    }
 
-            Layout.fillWidth: true
+    enter: Transition {
+        NumberAnimation {
+            property: "opacity"
+            from: 0
+            to: 1
+            duration: 200
         }
+        NumberAnimation {
+            property: "y"
+            from: -20
+            to: 20
+            duration: 200
+            easing.type: Easing.OutCubic
+        }
+    }
 
-        RowLayout {
-            Layout.fillWidth: true
-            Layout.alignment: Qt.AlignRight
-
-            spacing: 12
-
-            CustomButton {
-                text: "OK"
-                onClicked: root.close()
-            }
+    exit: Transition {
+        NumberAnimation {
+            property: "opacity"
+            from: 1
+            to: 0
+            duration: 200
+        }
+        NumberAnimation {
+            property: "y"
+            from: 20
+            to: 0
+            duration: 200
+            easing.type: Easing.InCubic
         }
     }
 }
