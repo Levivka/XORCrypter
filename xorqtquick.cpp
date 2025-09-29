@@ -1,5 +1,5 @@
 #include "xorqtquick.h"
-
+#include "tablemodel.h"
 #include "worker.h"
 
 #include <QDir>
@@ -87,6 +87,15 @@ void XorQtQuick::runTask(const QString &filePath,
         }
     }
 
+    int recordId = -1;
+    if (g_tableModel) {
+        g_tableModel->addRecord(QFileInfo(filePath).fileName(), "В процессе", 0.0);
+        recordId = g_tableModel->rowCount() > 0
+                       ? g_tableModel->index(g_tableModel->rowCount()-1, 0).data().toInt()
+                       : -1;
+    }
+
+
     QThread *thread = new QThread;
     Worker *worker = new Worker(filePath, xorKeyBytes, outputFilePath,
                                 overwrite, deleteFile);
@@ -94,12 +103,23 @@ void XorQtQuick::runTask(const QString &filePath,
     worker->moveToThread(thread);
 
     connect(thread, &QThread::started, worker, &Worker::process);
-    connect(worker, &Worker::progress, this, &XorQtQuick::progressChanged);
-    connect(worker, &Worker::finished, this, [&, thread](const QString &outPath) {
+    connect(worker, &Worker::progress, this, [recordId](int percent) {
+        if (g_tableModel && recordId != -1) {
+            g_tableModel->updateColumn(recordId, "progress", percent);
+        }
+    });
+    connect(worker, &Worker::finished, this, [&, recordId, thread](const QString &outPath) {
+        if (g_tableModel && recordId != -1) {
+            g_tableModel->updateColumn(recordId, "status", "Готово");
+            g_tableModel->updateColumn(recordId, "progress", 100);
+        }
         showInfo("Обработка завершена: " + outPath);
         thread->quit();
     });
-    connect(worker, &Worker::error, this, [&, thread](const QString &msg) {
+    connect(worker, &Worker::error, this, [&, recordId, thread](const QString &msg) {
+        if (g_tableModel && recordId != -1) {
+            g_tableModel->updateColumn(recordId, "status", "Ошибка");
+        }
         showError(msg);
         thread->quit();
     });

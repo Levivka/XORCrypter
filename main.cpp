@@ -1,3 +1,4 @@
+#include "tablemodel.h"
 #include "xorqtquick.h"
 
 #include <QGuiApplication>
@@ -12,6 +13,9 @@ int main(int argc, char *argv[])
 
     XorQtQuick backend;
     engine.rootContext()->setContextProperty("backend", &backend);
+
+    TableModel tableModel;
+    engine.rootContext()->setContextProperty("tableModel", &tableModel);
 
     QObject::connect(
         &engine,
