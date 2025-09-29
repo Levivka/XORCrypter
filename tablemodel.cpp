@@ -71,23 +71,41 @@ void TableModel::addRecord(const QString &fileName, const QString &status, doubl
 }
 
 void TableModel::updateColumn(int id, const QString &columnName, const QVariant &value) {
-    for (int i = 0; i < records.size(); ++i) {
-        if (records[i].id == id) {
-            if (columnName == "status") records[i].status = value.toString();
-            else if (columnName == "progress") records[i].progress = value.toDouble();
+    auto it = std::find_if(records.begin(), records.end(),
+                           [id](const EncryptionRecord &rec) { return rec.id == id; });
 
-            QSqlQuery query;
-            query.prepare(QString("UPDATE records SET %1 = :val WHERE id = :id").arg(columnName));
-            query.bindValue(":val", value);
-            query.bindValue(":id", id);
+    if (it == records.end())
+        return;
 
-            query.exec();
+    int row = std::distance(records.begin(), it);
 
-            emit dataChanged(index(i, 0), index(i, ColumnCount - 1));
-            break;
-        }
+    if (columnName == "progress") {
+        double newProgress = value.toDouble();
+        if (qFuzzyCompare(it->progress, newProgress))
+            return;
+
+        if (newProgress - it->progress < 1.0 && newProgress != 100.0)
+            return;
+
+        it->progress = newProgress;
     }
+    else if (columnName == "status") {
+        it->status = value.toString();
+    }
+    else {
+        return;
+    }
+
+    QSqlQuery query;
+    query.prepare(QString("UPDATE records SET %1 = :val WHERE id = :id").arg(columnName));
+    query.bindValue(":val", value);
+    query.bindValue(":id", id);
+    query.exec();
+
+    emit dataChanged(index(row, 0), index(row, ColumnCount - 1));
 }
+
+
 
 void TableModel::loadFromDatabase() {
     beginResetModel();
