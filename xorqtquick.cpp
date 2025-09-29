@@ -103,16 +103,18 @@ void XorQtQuick::runTask(const QString &filePath,
     worker->moveToThread(thread);
 
     connect(thread, &QThread::started, worker, &Worker::process);
-    connect(worker, &Worker::progress, this, [recordId](int percent) {
+    connect(worker, &Worker::progress, this, [recordId, this](int percent) {
         if (g_tableModel && recordId != -1) {
             g_tableModel->updateColumn(recordId, "progress", percent);
         }
+        emit progressChanged(percent);
     });
     connect(worker, &Worker::finished, this, [&, recordId, thread](const QString &outPath) {
         if (g_tableModel && recordId != -1) {
             g_tableModel->updateColumn(recordId, "status", "Готово");
             g_tableModel->updateColumn(recordId, "progress", 100);
         }
+        emit progressChanged(100);
         showInfo("Обработка завершена: " + outPath);
         thread->quit();
     });
