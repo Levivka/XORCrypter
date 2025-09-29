@@ -32,6 +32,7 @@ qt_add_qml_module(appXorQtQuick
     ./components/CustomCheckBox.qml
     ./components/CustomProgressBar.qml
     ./components/SpinSlider.qml
+    ./components/HistoryTable.qml
     SOURCES
     SOURCES tablemodel.h tablemodel.cpp
 )

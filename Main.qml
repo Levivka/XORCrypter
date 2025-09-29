@@ -120,7 +120,8 @@ ApplicationWindow {
                         backend.execute(fileMask.text, outputDir.text,
                                         xorKey.text, deleteFile.checked,
                                         overwriteMode.checked,
-                                        counterMode.checked, singleRunMode.checked,
+                                        counterMode.checked,
+                                        singleRunMode.checked,
                                         timerRunMode.checked, spinSlider.value)
                     } else {
                         messageDialog.dialogTitle = "Некорректный ключ"
@@ -152,101 +153,9 @@ ApplicationWindow {
             font.pixelSize: 20
             font.bold: true
         }
-
-        ColumnLayout {
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            Layout.margins: 20
-            spacing: 20
-
-            Row {
-                id: headerRow
-                Layout.fillWidth: true
-                height: 32
-                spacing: 1
-
-                Rectangle {
-                    width: 50
-                    height: parent.height
-                    color: "#2e3340"
-                    Text {
-                        text: "ID"
-                        anchors.centerIn: parent
-                        color: "white"
-                        font.bold: true
-                    }
-                }
-                Rectangle {
-                    width: 250
-                    height: parent.height
-                    color: "#2e3340"
-                    Text {
-                        text: "Файл"
-                        anchors.centerIn: parent
-                        color: "white"
-                        font.bold: true
-                    }
-                }
-                Rectangle {
-                    width: 120
-                    height: parent.height
-                    color: "#2e3340"
-                    Text {
-                        text: "Статус"
-                        anchors.centerIn: parent
-                        color: "white"
-                        font.bold: true
-                    }
-                }
-                Rectangle {
-                    width: 100
-                    height: parent.height
-                    color: "#2e3340"
-                    Text {
-                        text: "Прогресс"
-                        anchors.centerIn: parent
-                        color: "white"
-                        font.bold: true
-                    }
-                }
-            }
-
-            TableView {
-                id: historyTable
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                clip: true
-
-                model: tableModel
-
-                columnWidthProvider: function (column) {
-                    switch (column) {
-                    case 0: return 50;   // ID
-                    case 1: return 250;  // Файл
-                    case 2: return 120;  // Статус
-                    case 3: return 100;  // Прогресс
-                    default: return 100;
-                    }
-                }
-
-                rowHeightProvider: function (row) { return 30 }
-
-                delegate: Rectangle {
-                    implicitHeight: 30
-                    color: (row % 2 === 0) ? "#1e222a" : "#262a33"
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: model.display
-                        color: "white"
-                        elide: Text.ElideRight
-                    }
-                }
-            }
+        HistoryTable {
+            model: tableModel
         }
-
-
-
 
         CustomDialog {
             id: messageDialog
