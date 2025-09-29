@@ -37,12 +37,12 @@ public:
     Q_INVOKABLE void loadFromDatabase();
 
 private:
-    QVector<EncryptionRecord> m_records;
-    QSqlDatabase m_db;
+    QVector<EncryptionRecord>  records;
+    QSqlDatabase db;
 
     void initDatabase();
     void syncRecordToDatabase(const EncryptionRecord &rec);
 };
 
-extern TableModel* g_tableModel;
+extern TableModel* globalTableModel;
 

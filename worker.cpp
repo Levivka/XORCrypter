@@ -33,18 +33,25 @@ void Worker::process() {
     }
 
     const auto totalSize = inputFile.size();
+    const auto keyLength = key.size();
     qint64 bytesRead = 0;
     QByteArray buffer;
-    const auto keyLength = key.size();
+
 
     while (!(buffer = inputFile.read(BYTES ^ 2)).isEmpty()) {
         for (int i = 0; i < buffer.size(); ++i) {
             buffer[i] = buffer[i] ^ key[(bytesRead + i) % keyLength];
         }
+
         outputFile.write(buffer);
         bytesRead += buffer.size();
 
-        int percentage = int((double(bytesRead) / totalSize) * TOPERCENT);
+        int percentage = 0;
+        if (totalSize > 0) {
+            percentage = static_cast<int>(
+                (static_cast<double>(bytesRead) / static_cast<double>(totalSize)) * TOPERCENT
+                );
+        }
 
         emit progress(percentage);
     }
