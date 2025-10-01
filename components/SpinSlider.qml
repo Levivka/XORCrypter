@@ -24,7 +24,7 @@ Rectangle {
         spacing: 4
         anchors.margins: 4
 
-        CustomButton {
+        AppButton {
             text: "-"
 
             implicitWidth: 30
@@ -57,7 +57,7 @@ Rectangle {
             }
         }
 
-        CustomButton {
+        AppButton {
             text: "+"
 
             implicitWidth: 30

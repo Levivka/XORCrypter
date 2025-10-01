@@ -6,24 +6,25 @@
 #include <QFileInfo>
 #include <QRegularExpression>
 #include <QTimer>
-
+#include <QThread>
+#include <QSharedPointer>
 
 XorQtQuick::XorQtQuick(QObject *parent)
     : QObject(parent)
 {
 }
 
-const unsigned short TOSECONDS = 1000;
-const unsigned short HEXKEYLENGTH = 16;
-
+const unsigned short TO_SECONDS = 1000;
+const unsigned short HEX_KEY_LENGTH = 16;
+const double PROGRESS_COMPLETE = 100;
 
 QByteArray XorQtQuick::normalizeXorKey(const QString &xorKey) {
-    QString key = xorKey.toUpper();
+    const QString key = xorKey.toUpper();
     QString cleaned = key;
-    static QRegularExpression validator("[^0-9A-F]");
+    static const QRegularExpression validator("[^0-9A-F]");
     cleaned.remove(validator);
 
-    if (cleaned.size() != HEXKEYLENGTH) {
+    if (cleaned.size() != HEX_KEY_LENGTH) {
         showError("Неверный XOR-ключ (требуется 8 байт в hex)");
         return QByteArray();
     }
@@ -45,45 +46,58 @@ void XorQtQuick::execute(const QString &fileMask,
         return;
     }
 
-    QDir dir(QFileInfo(fileMask).absolutePath());
-    QStringList files = dir.entryList({QFileInfo(fileMask).fileName()}, QDir::Files);
+    const QDir dir(QFileInfo(fileMask).absolutePath());
+    const QStringList files = dir.entryList({QFileInfo(fileMask).fileName()}, QDir::Files);
     if (files.isEmpty()) {
         showError("Файлы по заданной маске не найдены");
         return;
     }
 
-    for (const QString &fileName : std::as_const(files)) {
-        QString filePath = dir.absoluteFilePath(fileName);
-        runTask(filePath, xorKeyBytes, outputDir, deleteFile, overwriteMode);
+    for (const QString &fileName : files) {
+        runTask(dir.absoluteFilePath(fileName), xorKeyBytes, outputDir, deleteFile, overwriteMode);
     }
 
     if (timerRunMode) {
-        QTimer *timer = new QTimer(this);
+        QTimer* timer = new QTimer(this);
         connect(timer, &QTimer::timeout, this, [=]() {
-            QStringList files = dir.entryList({QFileInfo(fileMask).fileName()}, QDir::Files);
-            for (const QString &fileName : std::as_const(files)) {
+            QStringList newFiles = dir.entryList({QFileInfo(fileMask).fileName()}, QDir::Files);
+            for (const QString &fileName : std::as_const(newFiles)) {
                 QString filePath = dir.absoluteFilePath(fileName);
                 runTask(filePath, xorKeyBytes, outputDir, deleteFile, overwriteMode);
             }
         });
-        timer->start(timerValue * TOSECONDS);
+        timer->start(timerValue * TO_SECONDS);
+        m_activeTimers_.push_back(timer);
     }
 }
 
 void XorQtQuick::runTask(const QString &filePath,
                          const QByteArray &xorKeyBytes,
                          const QString &outputDir,
-                         bool deleteFile,
-                         bool overwrite)
+                         const bool &deleteFile,
+                         const bool &overwrite)
 {
-    QString outputFilePath = outputDir + "/" + QFileInfo(filePath).fileName();
+
+    const QDir outDir(outputDir);
+    if (!outDir.exists()) {
+        if (!outDir.mkpath(".")) {
+            showError("Не удалось создать директорию: " + outputDir);
+            return;
+        }
+    }
+
+    QString outputFilePath = outDir.absoluteFilePath(QFileInfo(filePath).fileName());
 
     if (!overwrite) {
-        int fileId = 1;
-        QFileInfo info(filePath);
-        while (QFile::exists(outputFilePath)) {
-            outputFilePath = outputDir + "/" +
-                             info.baseName() + "_" + QString::number(fileId++) + "." + info.suffix();
+        const QFileInfo info(filePath);
+        QFileInfo outInfo(outputFilePath);
+
+        for (int fileId = 1; outInfo.exists(); ++fileId) {
+            QString newName = info.baseName() +
+                              "_" + QString::number(fileId) +
+                              "." + info.suffix();
+            outputFilePath = outDir.absoluteFilePath(newName);
+            outInfo.setFile(outputFilePath);
         }
     }
 
@@ -95,30 +109,28 @@ void XorQtQuick::runTask(const QString &filePath,
                        : -1;
     }
 
-
-    QThread *thread = new QThread;
-    Worker *worker = new Worker(filePath, xorKeyBytes, outputFilePath,
-                                overwrite, deleteFile);
-
+    QThread* thread = new QThread(this);
+    Worker* worker = new Worker(filePath, xorKeyBytes, outputFilePath, overwrite, deleteFile);
     worker->moveToThread(thread);
 
-    connect(thread, &QThread::started, worker, &Worker::process);
-    connect(worker, &Worker::progress, this, [recordId, this](int percent) {
+    connect(worker, &Worker::progress, this, [this, recordId](int percent) {
         if (globalTableModel && recordId != -1) {
             globalTableModel->updateColumn(recordId, "progress", percent);
         }
         emit progressChanged(percent);
     });
-    connect(worker, &Worker::finished, this, [&, recordId, thread](const QString &outPath) {
+
+    connect(worker, &Worker::finished, this, [this, recordId, thread](const QString &outPath) {
         if (globalTableModel && recordId != -1) {
             globalTableModel->updateColumn(recordId, "status", "Готово");
-            globalTableModel->updateColumn(recordId, "progress", 100);
+            globalTableModel->updateColumn(recordId, "progress", PROGRESS_COMPLETE);
         }
-        emit progressChanged(100);
+        emit progressChanged(PROGRESS_COMPLETE);
         showInfo("Обработка завершена: " + outPath);
         thread->quit();
     });
-    connect(worker, &Worker::error, this, [&, recordId, thread](const QString &msg) {
+
+    connect(worker, &Worker::error, this, [this, recordId, thread](const QString &msg) {
         if (globalTableModel && recordId != -1) {
             globalTableModel->updateColumn(recordId, "status", "Ошибка");
         }
@@ -126,11 +138,18 @@ void XorQtQuick::runTask(const QString &filePath,
         thread->quit();
     });
 
+
+
+    connect(thread, &QThread::started, worker, &Worker::process);
+    thread->start();
+
+    m_activeThreads_.push_back(thread);
+    m_activeWorkers_.push_back(worker);
+
     connect(thread, &QThread::finished, worker, &QObject::deleteLater);
     connect(thread, &QThread::finished, thread, &QObject::deleteLater);
-
-    thread->start();
 }
+
 
 void XorQtQuick::showError(const QString &msg) {
     emit showMessage("Ошибка", msg, true);

@@ -12,10 +12,10 @@ TableModel::TableModel(QObject *parent) : QAbstractTableModel(parent) {
 
 
 void TableModel::initDatabase() {
-    db = QSqlDatabase::addDatabase("QSQLITE");
-    db.setDatabaseName("database.db");
-    if (!db.open()) {
-        qWarning() << "Не удалось открыть БД:" << db.lastError();
+    m_db = QSqlDatabase::addDatabase("QSQLITE");
+    m_db.setDatabaseName("database.db");
+    if (!m_db.open()) {
+        qWarning() << "Не удалось открыть БД:" << m_db.lastError();
     }
 
     QSqlQuery query;
@@ -27,7 +27,7 @@ void TableModel::initDatabase() {
 }
 
 int TableModel::rowCount(const QModelIndex &) const {
-    return records.size();
+    return m_records.size();
 }
 
 int TableModel::columnCount(const QModelIndex &) const {
@@ -38,7 +38,7 @@ QVariant TableModel::data(const QModelIndex &index, int role) const {
     if (!index.isValid() || role != Qt::DisplayRole)
         return {};
 
-    const auto &rec = records[index.row()];
+    const auto &rec = m_records[index.row()];
     switch (index.column()) {
     case IdColumn: return rec.id;
     case FileNameColumn: return rec.fileName;
@@ -48,7 +48,7 @@ QVariant TableModel::data(const QModelIndex &index, int role) const {
     return {};
 }
 
-QVariant TableModel::headerData(int section, Qt::Orientation orientation, int role) const {
+QVariant TableModel::headerData(int section, const Qt::Orientation orientation, int role) const {
     if (orientation == Qt::Horizontal && role == Qt::DisplayRole) {
         switch (section) {
         case IdColumn: return "ID";
@@ -61,23 +61,23 @@ QVariant TableModel::headerData(int section, Qt::Orientation orientation, int ro
 }
 
 void TableModel::addRecord(const QString &fileName, const QString &status, double progress) {
-    beginInsertRows(QModelIndex(), records.size(), records.size());
+    beginInsertRows(QModelIndex(), m_records.size(), m_records.size());
     EncryptionRecord rec{-1, fileName, status, progress};
-    records.push_back(rec);
+    m_records.push_back(rec);
     endInsertRows();
 
-    syncRecordToDatabase(records.last());
+    syncRecordToDatabase(m_records.last());
     loadFromDatabase();
 }
 
 void TableModel::updateColumn(int id, const QString &columnName, const QVariant &value) {
-    auto it = std::find_if(records.begin(), records.end(),
+    auto it = std::find_if(m_records.begin(), m_records.end(),
                            [id](const EncryptionRecord &rec) { return rec.id == id; });
 
-    if (it == records.end())
+    if (it == m_records.end())
         return;
 
-    int row = std::distance(records.begin(), it);
+    int row = std::distance(m_records.begin(), it);
 
     if (columnName == "progress") {
         double newProgress = value.toDouble();
@@ -107,10 +107,11 @@ void TableModel::updateColumn(int id, const QString &columnName, const QVariant 
 
 
 
+
 void TableModel::loadFromDatabase() {
     beginResetModel();
 
-    records.clear();
+    m_records.clear();
 
     QSqlQuery query("SELECT id, fileName, status, progress FROM records");
     while (query.next()) {
@@ -121,7 +122,7 @@ void TableModel::loadFromDatabase() {
         rec.status = query.value(2).toString();
         rec.progress = query.value(3).toDouble();
 
-        records.push_back(rec);
+        m_records.push_back(rec);
     }
 
     endResetModel();

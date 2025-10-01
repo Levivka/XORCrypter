@@ -1,4 +1,6 @@
 #pragma once
+#include "worker.h"
+
 #include <QObject>
 #include <QTimer>
 #include <QThread>
@@ -35,8 +37,12 @@ private:
     void runTask(const QString &filePath,
                  const QByteArray &xorKeyBytes,
                  const QString &outputDir,
-                 bool deleteFile,
-                 bool overwrite);
+                 const bool &deleteFile,
+                 const bool &overwrite);
     void showError(const QString &msg);
     void showInfo(const QString &msg);
+    \
+    std::vector<QThread*> m_activeThreads_;
+    std::vector<Worker*>  m_activeWorkers_;
+    std::vector<QTimer*>  m_activeTimers_;
 };

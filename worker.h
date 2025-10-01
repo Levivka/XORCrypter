@@ -23,9 +23,9 @@ public slots:
     void process();
 
 private:
-    QString filePath;
-    QString outputPath;
-    QByteArray key;
-    bool overwrite;
-    bool deleteInput;
+    QString m_filePath;
+    QString m_outputPath;
+    QByteArray m_key;
+    bool m_overwrite;
+    bool m_deleteInput;
 };

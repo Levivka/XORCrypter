@@ -24,15 +24,15 @@ qt_add_qml_module(appXorQtQuick
     VERSION 1.0
     QML_FILES
     Main.qml
-    ./components/CustomButton.qml
-    ./components/CustomDialog.qml
-    ./components/CustomFrame.qml
-    ./components/CustomTextField.qml
-    ./components/CustomLabel.qml
-    ./components/CustomCheckBox.qml
-    ./components/CustomProgressBar.qml
+    ./components/AppButton.qml
+    ./components/AppDialog.qml
+    ./components/AppFrame.qml
+    ./components/AppTextField.qml
+    ./components/AppLabel.qml
+    ./components/AppCheckBox.qml
+    ./components/AppProgressBar.qml
     ./components/SpinSlider.qml
-    ./components/HistoryTable.qml
+    ./components/HistoryTableView.qml
     SOURCES
     SOURCES tablemodel.h tablemodel.cpp
 )

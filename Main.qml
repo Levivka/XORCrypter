@@ -19,58 +19,68 @@ ApplicationWindow {
         anchors.margins: 20
         spacing: 20
 
-        CustomLabel {
+        AppLabel {
             text: "Основные параметры"
             font.pixelSize: 20
             font.bold: true
         }
 
-        CustomTextField {
+        AppTextField {
             id: fileMask
             placeholderText: "Маска файлов (*.txt, *.bin)"
             Layout.fillWidth: true
         }
 
-        CustomTextField {
+        AppTextField {
             id: outputDir
             placeholderText: "Путь для сохранения файлов"
             Layout.fillWidth: true
         }
 
-        CustomTextField {
+        AppTextField {
             id: xorKey
             placeholderText: "XOR-ключ (16 hex-символов = 8 байт)"
             Layout.fillWidth: true
             maximumLength: 16
+
+            validator: RegularExpressionValidator {
+                regularExpression: /^[0-9A-F]*$/
+            }
+
+            onTextChanged: {
+                if (text !== text.toUpperCase()) {
+                    text = text.toUpperCase()
+                }
+            }
         }
 
-        CustomLabel {
+        AppLabel {
             text: "Дополнительные параметры"
             font.pixelSize: 20
             font.bold: true
         }
 
-        CustomCheckBox {
+        AppCheckBox {
             id: deleteFile
             text: "Удалять входные файлы после обработки"
         }
 
         RowLayout {
             spacing: 20
-            CustomCheckBox {
+            AppCheckBox {
                 id: overwriteMode
                 text: "Перезапись"
                 checked: true
                 onToggled: counterMode.checked = !checked
             }
-            CustomCheckBox {
+            AppCheckBox {
                 id: counterMode
                 text: "Добавление счётчика"
                 onToggled: overwriteMode.checked = !checked
             }
         }
 
-        CustomLabel {
+        AppLabel {
             text: "Режим работы"
             font.pixelSize: 20
             font.bold: true
@@ -78,7 +88,7 @@ ApplicationWindow {
 
         RowLayout {
             spacing: 20
-            CustomCheckBox {
+            AppCheckBox {
                 id: singleRunMode
                 text: "Одноразовый запуск"
                 checked: true
@@ -87,7 +97,7 @@ ApplicationWindow {
                     spinSlider.enabled = false
                 }
             }
-            CustomCheckBox {
+            AppCheckBox {
                 id: timerRunMode
                 text: "Запуск по таймеру"
                 onToggled: {
@@ -99,21 +109,19 @@ ApplicationWindow {
 
         SpinSlider {
             id: spinSlider
-
             from: 1
             to: 300
-
             stepSize: 1
             value: 1
-
             enabled: false
+            Layout.fillWidth: true
         }
 
         RowLayout {
             spacing: 20
             Layout.alignment: Qt.AlignHCenter
 
-            CustomButton {
+            AppButton {
                 text: "Запустить"
                 onClicked: {
                     if (backend.isValidKey(xorKey.text)) {
@@ -132,7 +140,7 @@ ApplicationWindow {
                 }
             }
 
-            CustomButton {
+            AppButton {
                 text: "Выход"
                 primaryColor: "#6c1c1c"
                 hoverColor: "#922424"
@@ -141,23 +149,27 @@ ApplicationWindow {
             }
         }
 
-        CustomProgressBar {
+        AppProgressBar {
             id: progressBar
             Layout.fillWidth: true
             value: 0
             visible: false
         }
 
-        CustomLabel {
+        AppLabel {
             text: "История обработанных файлов"
             font.pixelSize: 20
             font.bold: true
         }
-        HistoryTable {
+
+        HistoryTableView {
+            id: historyTable
             model: tableModel
+            Layout.fillWidth: true
+            Layout.fillHeight: true
         }
 
-        CustomDialog {
+        AppDialog {
             id: messageDialog
         }
     }

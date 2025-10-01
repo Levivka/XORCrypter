@@ -37,8 +37,8 @@ public:
     Q_INVOKABLE void loadFromDatabase();
 
 private:
-    QVector<EncryptionRecord>  records;
-    QSqlDatabase db;
+    QVector<EncryptionRecord>  m_records;
+    QSqlDatabase m_db;
 
     void initDatabase();
     void syncRecordToDatabase(const EncryptionRecord &rec);
