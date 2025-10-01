@@ -9,6 +9,8 @@ struct EncryptionRecord {
     QString fileName;
     QString status;
     double progress;
+    QString timestamp;
+    QString xorKey;
 };
 
 
@@ -23,6 +25,8 @@ public:
         FileNameColumn,
         StatusColumn,
         ProgressColumn,
+        TimeColumn,
+        KeyColumn,
         ColumnCount
     };
     Q_ENUM(Columns)
@@ -33,8 +37,9 @@ public:
     QVariant headerData(int section, Qt::Orientation orientation, int role) const override;
 
     Q_INVOKABLE void updateColumn(int id, const QString &columnName, const QVariant &value);
-    Q_INVOKABLE void addRecord(const QString &fileName, const QString &status, double progress);
+    Q_INVOKABLE void addRecord(const QString &fileName, const QString &status, double progress, const QString &xorKey);
     Q_INVOKABLE void loadFromDatabase();
+    Q_INVOKABLE void clearAll();
 
 private:
     QVector<EncryptionRecord>  m_records;

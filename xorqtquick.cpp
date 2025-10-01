@@ -77,7 +77,6 @@ void XorQtQuick::runTask(const QString &filePath,
                          const bool &deleteFile,
                          const bool &overwrite)
 {
-
     const QDir outDir(outputDir);
     if (!outDir.exists()) {
         if (!outDir.mkpath(".")) {
@@ -101,9 +100,11 @@ void XorQtQuick::runTask(const QString &filePath,
         }
     }
 
+    QString xorKeyHex = xorKeyBytes.toHex().toUpper();
+
     int recordId = -1;
     if (globalTableModel) {
-        globalTableModel->addRecord(QFileInfo(filePath).fileName(), "В процессе", 0.0);
+        globalTableModel->addRecord(QFileInfo(filePath).fileName(), "В процессе", 0.0, xorKeyHex);
         recordId = globalTableModel->rowCount() > 0
                        ? globalTableModel->index(globalTableModel->rowCount()-1, 0).data().toInt()
                        : -1;
@@ -137,8 +138,6 @@ void XorQtQuick::runTask(const QString &filePath,
         showError(msg);
         thread->quit();
     });
-
-
 
     connect(thread, &QThread::started, worker, &Worker::process);
     thread->start();
